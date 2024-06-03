@@ -13,8 +13,8 @@ jobs:
         id: version_step
         run: |
           echo "##[set-output name=version;]VERSION=${GITHUB_REF#$"refs/tags/v"}"
-          echo "##[set-output name=version_tag;]lateautumn2/discussion:${GITHUB_REF#$"refs/tags/v"}"
-          echo "##[set-output name=latest_tag;]lateautumn2/discussion:latest"        
+          echo "##[set-output name=version_tag;]lateautumn02/discussion:${GITHUB_REF#$"refs/tags/v"}"
+          echo "##[set-output name=latest_tag;]lateautumn02/discussion:latest"        
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
