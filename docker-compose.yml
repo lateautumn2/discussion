@@ -1,7 +1,7 @@
 version: '3'
 services:
   discussion:
-    image: kingwrcy/discussion:latest
+    image: lateautumn02/discussion:latest
     container_name: discussion
     #pull_policy: always
     ports:
