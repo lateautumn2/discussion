@@ -1,29 +1,14 @@
 import short from 'short-uuid'
 
-import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 import nodemailer from 'nodemailer'
 
 import { createCache, memoryStore } from 'cache-manager'
-import pg from 'pg'
 // import TelegramBot from 'node-telegram-bot-api'
 // import TGBot from '../tgBot'
 import type { SysConfigDTO, recaptchaResponse } from '~/types'
 
-const { Pool } = pg
-
-const connectionString = `${process.env.DATABASE_URL}`
-const pool = new Pool({
-  connectionString,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-})
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle database client', err)
-})
-const adapter = new PrismaPg(pool)
-export const prisma = new PrismaClient({ adapter, log: ['warn', 'error'] })
+export const prisma = new PrismaClient({ log: ['warn', 'error'] })
 
 const config = useRuntimeConfig()
 
