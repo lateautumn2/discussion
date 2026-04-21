@@ -13,7 +13,15 @@ import type { SysConfigDTO, recaptchaResponse } from '~/types'
 const { Pool } = pg
 
 const connectionString = `${process.env.DATABASE_URL}`
-const pool = new Pool({ connectionString })
+const pool = new Pool({
+  connectionString,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+})
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle database client', err)
+})
 const adapter = new PrismaPg(pool)
 export const prisma = new PrismaClient({ adapter, log: ['warn', 'error'] })
 
@@ -71,8 +79,9 @@ export async function sendMailWithParams({ host, username, port, secure, passwor
     return body.message
   }
 
+  let transporter
   try {
-    const transporter = nodemailer.createTransport({
+    transporter = nodemailer.createTransport({
       host,
       port,
       secure,
@@ -96,6 +105,9 @@ export async function sendMailWithParams({ host, username, port, secure, passwor
   catch (e: any) {
     console.log(e)
     return `发送邮件失败${'message' in e ? e.message : ''}`
+  }
+  finally {
+    transporter?.close()
   }
   return ''
 }

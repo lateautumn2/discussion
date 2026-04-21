@@ -131,7 +131,7 @@ export default defineEventHandler(async (event) => {
     return { success: true }
   }
 
-  mentioned.forEach(async (user) => {
+  for (const user of mentioned) {
     const username = user.slice(1)
     const target = await prisma.user.findUnique({ where: { username } })
     if (target) {
@@ -146,7 +146,7 @@ export default defineEventHandler(async (event) => {
       })
       await sendTgMessage(sysConfigDTO, target.tgChatID, `你在帖子[${post.title}](${sysConfigDTO.websiteUrl}/post/${request.pid}#${cid})中被提到了`)
     }
-  })
+  }
 
   await prisma.user.update({
     where: {
