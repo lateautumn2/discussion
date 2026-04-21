@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const chatID = request.message.chat.id.toString()
 
   if (params.split('#').length !== 2) {
-    sendTgMessage(sysConfigDTO, chatID, `格式不正确`)
+    await sendTgMessage(sysConfigDTO, chatID, `格式不正确`)
     return
   }
   const [username, secretKey] = params.split('#')
@@ -25,14 +25,14 @@ export default defineEventHandler(async (event) => {
     where: { username, secretKey },
   })
   if (!user) {
-    sendTgMessage(sysConfigDTO, chatID, `不存在${username}这个用户`)
+    await sendTgMessage(sysConfigDTO, chatID, `不存在${username}这个用户`)
     return
   }
   await prisma.user.update({
     where: { username, secretKey },
     data: { tgChatID: chatID },
   })
-  sendTgMessage(sysConfigDTO, chatID, '恭喜你，操作成功,接下来有消息这里就会通知你！')
+  await sendTgMessage(sysConfigDTO, chatID, '恭喜你，操作成功,接下来有消息这里就会通知你！')
 
   return 'Hello Nitro'
 })

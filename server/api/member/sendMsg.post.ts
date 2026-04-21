@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
       type: MessageType.PRIVATE_MSG,
     },
   })
-  sendTgMessage(sysConfigDTO, targetUser.tgChatID, `你收到了[${currentUser!.username}](${sysConfigDTO.websiteUrl}/member/${currentUser!.username})一条私信：\n\n${request.content}`)
+  await sendTgMessage(sysConfigDTO, targetUser.tgChatID, `你收到了[${currentUser!.username}](${sysConfigDTO.websiteUrl}/member/${currentUser!.username})一条私信：\n\n${request.content}`)
 
   return {
     success: true,

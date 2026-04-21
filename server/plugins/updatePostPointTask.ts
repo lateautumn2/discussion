@@ -34,7 +34,7 @@ export default defineNitroPlugin((_) => {
       [2500, 3600],
     ]
     for (let level = 1; level <= levels.length; level++) {
-      await updateUserLevel(levels[level][0], levels[level][1], level + 1)
+      await updateUserLevel(levels[level - 1][0], levels[level - 1][1], level + 1)
     }
   }).everyHours(1)
 
@@ -61,7 +61,7 @@ export default defineNitroPlugin((_) => {
         },
       })
 
-      posts.forEach(async (post) => {
+      for (const post of posts) {
         const second = dayjs().diff(post.createdAt, 'second')
         const count = await prisma.comment.count({
           where: {
@@ -83,8 +83,7 @@ export default defineNitroPlugin((_) => {
             point,
           },
         })
-        // console.log("update post point ", post.pid, point);
-      })
+      }
     })
     .everyMinutes(3)
 })
