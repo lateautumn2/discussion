@@ -43,8 +43,7 @@ export default defineEventHandler(async (event) => {
     throw createError('用户积分小于或等于0分,不能发帖')
   }
   let pid = `p${randomId()}`
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
 
   if (sysConfigDTO.googleRecaptcha && sysConfigDTO.googleRecaptcha.enable) {
     const { success, message } = await checkGoogleRecaptcha(sysConfigDTO.googleRecaptcha.secretKey, request.token)

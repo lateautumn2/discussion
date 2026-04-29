@@ -28,8 +28,7 @@ export default defineEventHandler(async (event) => {
       message: '今天已经签到过了,请不要反复签到',
     }
   }
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
   const point = getRandomIntWeighted(
     sysConfigDTO.pointPerDaySignInMin,
     sysConfigDTO.pointPerDaySignInMax,

@@ -3,8 +3,7 @@ import type { SysConfigDTO, TGMessage } from '~/types'
 export default defineEventHandler(async (event) => {
   const request = await readBody(event) as TGMessage
   const token = getHeader(event, 'X-Telegram-Bot-Api-Secret-Token')
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
   if (token !== sysConfigDTO.notify.tgSecret) {
     return 'Unauthorized'
   }

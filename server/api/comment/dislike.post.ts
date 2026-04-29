@@ -1,5 +1,4 @@
 import { MessageType, PointReason } from '@prisma/client'
-import titleListPost from '../manage/title/titleList.post'
 import type { SysConfigDTO } from '~/types'
 
 export default defineEventHandler(async (event) => {
@@ -56,8 +55,7 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
 
   await prisma.pointHistory.create({
     data: {

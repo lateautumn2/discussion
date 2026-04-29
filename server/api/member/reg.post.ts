@@ -29,8 +29,7 @@ export default defineEventHandler(async (event) => {
       message: '用户名/邮箱已经存在了',
     }
   }
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
   const invite = sysConfigDTO.invite
   const uid = `u${randomId()}`
   let inviteCodes: any = {}

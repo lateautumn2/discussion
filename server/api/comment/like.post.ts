@@ -55,8 +55,7 @@ export default defineEventHandler(async (event) => {
       cid: comment.cid,
     },
   })
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
 
   await prisma.pointHistory.create({
     data: {

@@ -27,8 +27,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
 
   if (sysConfigDTO.googleRecaptcha && sysConfigDTO.googleRecaptcha.enable) {
     const { success, message } = await checkGoogleRecaptcha(sysConfigDTO.googleRecaptcha.secretKey, request.token)

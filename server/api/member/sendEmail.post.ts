@@ -16,8 +16,7 @@ export default defineEventHandler(async (event) => {
   const emailCodeKey = randomId()
   const ip = getHeader(event, 'x-real-ip') || getHeader(event, 'x-forwarded-for')
 
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
 
   if (!sysConfigDTO.regWithEmailCodeVerify) {
     return {

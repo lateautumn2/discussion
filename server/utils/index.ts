@@ -1,14 +1,53 @@
+import { S3Client } from '@aws-sdk/client-s3'
 import short from 'short-uuid'
 
 import { PrismaClient } from '@prisma/client'
 import nodemailer from 'nodemailer'
 
 import { createCache, memoryStore } from 'cache-manager'
-// import TelegramBot from 'node-telegram-bot-api'
-// import TGBot from '../tgBot'
 import type { SysConfigDTO, recaptchaResponse } from '~/types'
 
 export const prisma = new PrismaClient({ log: ['warn', 'error'] })
+
+let s3ClientInstance: S3Client | null = null
+let s3ClientConfigKey = ''
+
+export function getS3Client(config: SysConfigDTO): S3Client {
+  const configKey = `${config.s3.endpoint}|${config.s3.region}|${config.s3.ak}`
+  if (s3ClientInstance && s3ClientConfigKey === configKey) {
+    return s3ClientInstance
+  }
+  if (s3ClientInstance) {
+    s3ClientInstance.destroy()
+  }
+  s3ClientInstance = new S3Client({
+    region: config.s3.region,
+    endpoint: config.s3.endpoint,
+    credentials: {
+      accessKeyId: config.s3.ak,
+      secretAccessKey: config.s3.sk,
+    },
+  })
+  s3ClientConfigKey = configKey
+  return s3ClientInstance
+}
+
+let cachedSysConfig: { data: SysConfigDTO, ts: number } | null = null
+const SYS_CONFIG_TTL = 60_000
+
+export async function getSysConfigDTO(): Promise<SysConfigDTO> {
+  if (cachedSysConfig && Date.now() - cachedSysConfig.ts < SYS_CONFIG_TTL) {
+    return cachedSysConfig.data
+  }
+  const config = await prisma.sysConfig.findFirst()
+  const dto = config?.content as unknown as SysConfigDTO
+  cachedSysConfig = { data: dto, ts: Date.now() }
+  return dto
+}
+
+export function invalidateSysConfigCache() {
+  cachedSysConfig = null
+}
 
 const config = useRuntimeConfig()
 
@@ -26,8 +65,7 @@ export const emailCodeCache = createCache(memoryStore({
 }))
 
 export async function sendMail(to: string, subject: string, html: string) {
-  const config = await prisma.sysConfig.findFirst({})
-  const sysConfigDTO = config?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
   const { host, port, username, password, senderName } = sysConfigDTO.email
   if (host === '' || port === 0 || username === '' || password === '' || senderName === '') {
     return '请先配置邮箱'
@@ -59,6 +97,7 @@ export async function sendMailWithParams({ host, username, port, secure, passwor
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ host, username, port, secure, password, to, subject, html, senderName }),
+      signal: AbortSignal.timeout(10000),
     })
     const body = await res.json()
     return body.message
@@ -70,6 +109,8 @@ export async function sendMailWithParams({ host, username, port, secure, passwor
       host,
       port,
       secure,
+      pool: true,
+      maxConnections: 5,
       auth: {
         user: username,
         pass: password,
@@ -147,6 +188,7 @@ export async function sendTgMessage(sysConfigDTO: SysConfigDTO, chatId: string |
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: AbortSignal.timeout(10000),
       })
       const resJson = await res.json()
       console.log('tg消息发送结果:', resJson)

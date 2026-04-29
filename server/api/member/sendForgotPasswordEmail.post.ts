@@ -31,8 +31,7 @@ export default defineEventHandler(async (event) => {
   const emailCode = randomId().substring(0, 6)
   const emailCodeKey = randomId()
   const ip = getHeader(event, 'x-real-ip') || getHeader(event, 'x-forwarded-for')
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
   const subject = `${sysConfigDTO.websiteName} 重置密码邮件 Reset Password Email`
   const html = `您正在重置密码，验证码是：<b>${emailCode}</b>`
   if (ip) {

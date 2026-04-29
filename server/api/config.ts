@@ -1,4 +1,6 @@
-import fs from 'node:fs'
+import fs from 'node:fs/promises'
+
+let cachedVersion: string | null = null
 
 export default defineEventHandler(async (_) => {
   const config = await prisma.sysConfig.findFirst({
@@ -6,21 +8,19 @@ export default defineEventHandler(async (_) => {
       content: true,
     },
   })
-  let version = '1.0'
-  try {
-    if (fs.existsSync('/app/version')) {
-      version = await fs.readFileSync('/app/version', {
-        encoding: 'utf8',
-        flag: 'r',
-      })
+
+  if (cachedVersion === null) {
+    try {
+      cachedVersion = await fs.readFile('/app/version', { encoding: 'utf8' })
+    }
+    catch {
+      cachedVersion = '1.0'
     }
   }
-  catch (e) {
-    // console.log('read version file error',e)
-  }
+
   return {
     success: true,
     data: config?.content,
-    version,
+    version: cachedVersion,
   }
 })

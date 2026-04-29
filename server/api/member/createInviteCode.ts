@@ -5,8 +5,7 @@ export default defineEventHandler(async (event) => {
   if (!event.context.uid) {
     throw createError('请先去登录')
   }
-  const sysConfig = await prisma.sysConfig.findFirst()
-  const sysConfigDTO = sysConfig?.content as unknown as SysConfigDTO
+  const sysConfigDTO = await getSysConfigDTO()
   const point = sysConfigDTO.createInviteCodePoint
 
   const user = await prisma.user.findUnique({

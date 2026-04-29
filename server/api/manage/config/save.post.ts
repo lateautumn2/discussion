@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
       content: body,
     },
   })
+  invalidateSysConfigCache()
 
   return {
     success: true,
