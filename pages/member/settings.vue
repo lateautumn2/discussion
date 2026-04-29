@@ -19,6 +19,13 @@ useHead({
 
 type Schema = z.output<typeof saveSettingsRequestSchema>
 
+const activeTab = ref(0)
+const tabItems = [
+  { key: 'basic', label: '基本资料' },
+  { key: 'invite', label: '邀请管理' },
+  { key: 'custom', label: '个性化' },
+]
+
 const state = reactive({
   headImg: userinfo.headImg,
   email: userinfo.email,
@@ -101,64 +108,77 @@ async function uploadAvatar(event: Event) {
       </div>
     </template>
     <UForm :schema="saveSettingsRequestSchema" :state="state" class="space-y-4" @submit="onSubmit">
-      <UFormGroup label="用户名">
-        {{ userinfo.username }}
-      </UFormGroup>
-      <UFormGroup label="等级">
-        {{ userinfo.level }}级 - (<NuxtLink class="text-blue-500" :to="`/member/${userinfo.username}/point`">
-          {{ userinfo.point }}分
-        </NuxtLink>)
-      </UFormGroup>
-      <UFormGroup label="头像">
-        <UAvatar :src="avatarUrl" size="lg" alt="Avatar" />
-      </UFormGroup>
-      <UFormGroup v-if="sysConfig.enableUploadLocalImage">
-        <UButtonGroup size="sm">
-          <UButton icon="i-heroicons-camera" color="white" variant="solid">
-            <label for="uploadAvatar">本地上传</label>
-            <input id="uploadAvatar" name="uploadAvatar" type="file" accept="image/*" class="hidden" @change="uploadAvatar">
-          </UButton>
-        </UButtonGroup>
-      </UFormGroup>
+      <UTabs v-model="activeTab" :items="tabItems" class="w-full">
+        <template #item="{ item }">
+          <div v-if="item.key === 'basic'" class="space-y-4 pt-4">
+            <UFormGroup label="用户名">
+              {{ userinfo.username }}
+            </UFormGroup>
+            <UFormGroup label="等级">
+              {{ userinfo.level }}级 - (<NuxtLink class="text-blue-500" :to="`/member/${userinfo.username}/point`">
+                {{ userinfo.point }}分
+              </NuxtLink>)
+            </UFormGroup>
+            <UFormGroup label="头像">
+              <UAvatar :src="avatarUrl" size="lg" alt="Avatar" />
+            </UFormGroup>
+            <UFormGroup v-if="sysConfig.enableUploadLocalImage">
+              <UButtonGroup size="sm">
+                <UButton icon="i-heroicons-camera" color="white" variant="solid">
+                  <label for="uploadAvatar">本地上传</label>
+                  <input id="uploadAvatar" name="uploadAvatar" type="file" accept="image/*" class="hidden" @change="uploadAvatar">
+                </UButton>
+              </UButtonGroup>
+            </UFormGroup>
+            <UFormGroup label="密码" name="password" hint="留空则不修改密码">
+              <UInput v-model="state.password" type="password" />
+            </UFormGroup>
+            <UFormGroup label="自定义头像" name="headImg" hint="请填写头像地址，将会优先于gravatar显示，清空则使用gravatar">
+              <UInput v-model="state.headImg" type="text" />
+            </UFormGroup>
+            <UFormGroup label="邮箱" name="email" hint="请使用常用邮箱,会用来生成头像">
+              <UInput v-model="state.email" type="text" />
+            </UFormGroup>
+          </div>
 
-      <UFormGroup label="密码" name="password" hint="留空则不修改密码">
-        <UInput v-model="state.password" type="password" />
-      </UFormGroup>
-      <UFormGroup label="自定义头像" name="headImg" hint="请填写头像地址，将会优先于gravatar显示，清空则使用gravatar">
-        <UInput v-model="state.headImg" type="text" />
-      </UFormGroup>
-      <UFormGroup label="邮箱" name="email" hint="请使用常用邮箱,会用来生成头像">
-        <UInput v-model="state.email" type="text" />
-      </UFormGroup>
-      <UFormGroup v-if="sysConfig.invite" label="邀请码" name="email" hint="24小时内单次有效">
-        <UButtonGroup size="sm" orientation="horizontal">
-          <UButton @click="createInviteCode">
-            生成邀请码
-          </UButton>
-          <UInput v-model="inviteCode" disabled />
-          <UButton icon="i-heroicons-clipboard-document" color="gray" @click="copyCode" />
-          <UButton color="gray" @click="toggleInviteCodelist">
-            历史邀请码列表
-          </UButton>
-        </UButtonGroup>
-      </UFormGroup>
-      <XInviteCodeList v-if="openInviteCodeList" />
+          <div v-if="item.key === 'invite'" class="space-y-4 pt-4">
+            <UFormGroup v-if="sysConfig.invite" label="邀请码" name="email" hint="24小时内单次有效">
+              <UButtonGroup size="sm" orientation="horizontal">
+                <UButton @click="createInviteCode">
+                  生成邀请码
+                </UButton>
+                <UInput v-model="inviteCode" disabled />
+                <UButton icon="i-heroicons-clipboard-document" color="gray" @click="copyCode" />
+                <UButton color="gray" @click="toggleInviteCodelist">
+                  历史邀请码列表
+                </UButton>
+              </UButtonGroup>
+            </UFormGroup>
+            <XInviteCodeList v-if="openInviteCodeList" />
+            <div v-if="!sysConfig.invite" class="text-gray-400">
+              当前未开启邀请码功能
+            </div>
+          </div>
 
-      <UFormGroup label="自定义css" name="css" hint="修改了此项需要刷新页面">
-        <UTextarea v-model="state.css" :rows="10" />
-      </UFormGroup>
-      <UFormGroup label="自定义JS" name="css" hint="修改了此项需要刷新页面">
-        <UTextarea v-model="state.js" :rows="10" />
-      </UFormGroup>
-      <UFormGroup label="自定义签名" name="css">
-        <template #hint>
-          2级以上用户可以添加,只支持markdown语法的链接写法,不支持其它格式,比如图片等
+          <div v-if="item.key === 'custom'" class="space-y-4 pt-4">
+            <UFormGroup label="自定义css" name="css" hint="修改了此项需要刷新页面">
+              <UTextarea v-model="state.css" :rows="10" />
+            </UFormGroup>
+            <UFormGroup label="自定义JS" name="js" hint="修改了此项需要刷新页面">
+              <UTextarea v-model="state.js" :rows="10" />
+            </UFormGroup>
+            <UFormGroup label="自定义签名" name="signature">
+              <template #hint>
+                2级以上用户可以添加,只支持markdown语法的链接写法,不支持其它格式,比如图片等
+              </template>
+              <UTextarea
+                v-model="state.signature" placeholder="[Moments](https://m.mblog.club)"
+                :disabled="userinfo.level < 2 && userinfo.role === 'USER'"
+              />
+            </UFormGroup>
+          </div>
         </template>
-        <UTextarea
-          v-model="state.signature" placeholder="[Moments](https://m.mblog.club)"
-          :disabled="userinfo.level < 2 && userinfo.role === 'USER'"
-        />
-      </UFormGroup>
+      </UTabs>
       <UButton type="submit">
         保存
       </UButton>

@@ -201,6 +201,29 @@ async function makePointAction() {
     await reload()
   }
 }
+
+const resetPwdOpen = ref(false)
+const resetPwdResult = ref('')
+const resetPwdUsername = ref('')
+async function openResetPwd(row: UserDTO) {
+  resetPwdUsername.value = row.username
+  const res = await $fetch('/api/manage/member/resetPwd', {
+    method: 'POST',
+    body: JSON.stringify({ uid: row.uid }),
+  }) as any
+  if (res.success) {
+    resetPwdResult.value = res.newPassword
+    resetPwdOpen.value = true
+    toast.success(res.message)
+  }
+  else {
+    toast.error(res.message)
+  }
+}
+function copyNewPassword() {
+  navigator.clipboard.writeText(resetPwdResult.value)
+  toast.success('密码已复制')
+}
 </script>
 
 <template>
@@ -221,6 +244,28 @@ async function makePointAction() {
       <UButton @click="makePointAction">
         提交
       </UButton>
+    </div>
+  </UModal>
+
+  <UModal v-model="resetPwdOpen">
+    <div class="p-4 space-y-4">
+      <div class="text-lg font-semibold">
+        密码重置成功
+      </div>
+      <div class="text-sm text-gray-500">
+        用户 <span class="font-medium text-gray-700">{{ resetPwdUsername }}</span> 的新密码如下，请及时告知用户：
+      </div>
+      <div class="flex items-center gap-2">
+        <UInput v-model="resetPwdResult" class="flex-1" readonly />
+        <UButton color="primary" @click="copyNewPassword">
+          复制
+        </UButton>
+      </div>
+      <div class="flex justify-end">
+        <UButton color="gray" @click="resetPwdOpen = false">
+          关闭
+        </UButton>
+      </div>
     </div>
   </UModal>
 
@@ -291,6 +336,7 @@ async function makePointAction() {
             />
           </UDropdown>
           <UButton color="white" label="积分调整" @click="openPointAction(row.uid)" />
+          <UButton color="white" label="重置密码" @click="openResetPwd(row)" />
         </div>
       </template>
     </UTable>

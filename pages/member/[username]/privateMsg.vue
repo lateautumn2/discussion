@@ -25,7 +25,10 @@ const columns = [{
   label: '时间',
 }, {
   key: 'from.username',
-  label: '来自',
+  label: '最后回复',
+}, {
+  key: 'partnerUser.username',
+  label: '对方',
 }, {
   key: 'content',
   label: '内容',
@@ -50,13 +53,21 @@ const columns = [{
         系统
       </div>
     </template>
+    <template #partnerUser.username-data="{ row }">
+      <ULink v-if="row.partnerUser" class="text-blue-500" :to="`/member/${row.partnerUser.username}`">
+        {{ row.partnerUser.username }}
+      </ULink>
+      <div v-else>
+        -
+      </div>
+    </template>
     <template #empty-state>
       <div class="text-center text-gray-400 my-4 text-sm">
         暂无消息
       </div>
     </template>
     <template #actions-data="{ row }">
-      <UButton v-if="row.type === 'PRIVATE_MSG'" size="xs" :to="`/member/${props.username}/from/${row.from.username}`">
+      <UButton v-if="row.type === 'PRIVATE_MSG'" size="xs" :to="`/member/${props.username}/from/${row.partnerUser?.username || row.from?.username}`">
         回复
       </UButton>
     </template>

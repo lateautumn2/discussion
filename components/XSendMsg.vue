@@ -13,41 +13,64 @@ const state = reactive({
 })
 const pending = ref(false)
 const global = useGlobalConfig()
-const sysconfig = global.value?.sysConfig as SysConfigDTO
+const sysconfig = computed(() => global.value?.sysConfig as SysConfigDTO | undefined)
 
 async function sendMsg() {
   pending.value = true
-  if (sysconfig.googleRecaptcha && sysconfig.googleRecaptcha.enable) {
-    grecaptcha.ready(() => {
-      grecaptcha.execute(sysconfig.googleRecaptcha.siteKey, { action: 'sendMsg' }).then(async (token) => {
-        await doSendMsg(token)
+  try {
+    if (sysconfig.value?.googleRecaptcha?.enable) {
+      if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.ready(() => {
+          const executePromise = grecaptcha.execute(sysconfig.value!.googleRecaptcha.siteKey, { action: 'sendMsg' }) as Promise<string>
+          executePromise.then(async (token) => {
+            await doSendMsg(token)
+            pending.value = false
+          }).catch((err: any) => {
+            toast.error('reCAPTCHA 验证失败')
+            console.error(err)
+            pending.value = false
+          })
+        })
+      }
+      else {
+        toast.error('reCAPTCHA 脚本未加载')
         pending.value = false
-      })
-    })
+      }
+    }
+    else {
+      await doSendMsg()
+      pending.value = false
+    }
   }
-  else {
-    await doSendMsg()
+  catch (err: any) {
+    toast.error('发送失败，请重试')
+    console.error(err)
     pending.value = false
   }
 }
 
 async function doSendMsg(token?: string) {
-  const { success, message } = await $fetch('/api/member/sendMsg', {
-    method: 'POST',
-    body: JSON.stringify({
-      content: state.content,
-      toUser: state.toUser,
-      token,
-    }),
-  })
-  if (success) {
-    toast.success(message)
-    state.content = ''
-    emit('sendMsgSuccess')
-    // await navigateTo(`/member/${props.toUsername}`)
+  try {
+    const { success, message } = await $fetch('/api/member/sendMsg', {
+      method: 'POST',
+      body: {
+        content: state.content,
+        toUser: state.toUser,
+        token,
+      },
+    })
+    if (success) {
+      toast.success(message)
+      state.content = ''
+      emit('sendMsgSuccess')
+    }
+    else {
+      toast.error(message)
+    }
   }
-  else {
-    toast.error(message)
+  catch (err: any) {
+    toast.error(err?.data?.message || err?.message || '发送失败')
+    console.error(err)
   }
 }
 </script>

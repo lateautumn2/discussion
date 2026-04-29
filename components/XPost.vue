@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<PostDTO & {
 }>(), {
   showAvatar: true,
   fav: false,
+  hide: false,
 })
 const emit = defineEmits(['support'])
 const route = useRoute()

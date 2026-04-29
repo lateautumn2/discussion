@@ -53,7 +53,7 @@ export default defineNitroPlugin((nitroApp) => {
         await prisma.$executeRaw`
           UPDATE "Post"
           SET point = (
-            (("Post_author"."point" * 2 + "Post"."PostSupportCount" * 2 + "Post"."CommentCount" - 1)
+            (("Post_author"."point" * 2 + "Post_author"."PostSupportCount" * 2 + "Post_author"."CommentCount" - 1)
               / POWER(EXTRACT(EPOCH FROM (NOW() - "Post"."createdAt"))::float + 600, 1.1))
             * 10000000
           )

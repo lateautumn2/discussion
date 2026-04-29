@@ -12,6 +12,14 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  if (!request.fromUsername) {
+    return {
+      success: false,
+      message: '参数错误',
+      list: [],
+    }
+  }
+
   const user = await prisma.user.findUnique({
     where: {
       username: request.fromUsername,

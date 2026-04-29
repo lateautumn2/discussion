@@ -2,7 +2,7 @@
 import { sendMsgSuccessed } from '~/utils/eventbus'
 
 const route = useRoute()
-const username = route.params.fromUsername as string
+const username = route.params.username as string
 </script>
 
 <template>

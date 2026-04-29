@@ -50,6 +50,11 @@ async function signIn() {
               <UIcon name="i-carbon-settings" title="设置" class="size-4 cursor-pointer hover:text-primary/90" />
             </NuxtLink>
             <UIcon
+              v-if="userinfo.signInToday"
+              name="i-carbon-checkmark-outline" title="今日已签到" class="size-4 text-green-500 cursor-default"
+            />
+            <UIcon
+              v-else
               name="i-carbon-checkmark-outline" title="签到" class="size-4 cursor-pointer hover:text-primary/90"
               @click="signIn"
             />

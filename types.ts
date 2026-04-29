@@ -97,6 +97,7 @@ export interface UserDTO {
   titles: TitleDTO[]
   unreadMessageCount: number
   unreadPrivateMessageCount: number
+  signInToday?: boolean
 }
 export interface TagDTO {
   id: number
