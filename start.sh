@@ -1,6 +1,8 @@
 #!/bin/sh
+set -e
+
 mkdir -p /app/upload
-npx prisma migrate deploy
+prisma migrate deploy
 
 NODE_OPTIONS="${NODE_OPTIONS} --max-old-space-size=512"
 export NODE_OPTIONS

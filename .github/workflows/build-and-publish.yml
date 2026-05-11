@@ -6,6 +6,13 @@ on:
       - main
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to build (branch, tag, or commit SHA)
+        required: false
+        default: main
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -19,8 +26,46 @@ jobs:
       packages: write
 
     steps:
+      - name: Resolve build variables
+        id: vars
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.ref }}" ]; then
+            checkout_ref="${{ inputs.ref }}"
+          else
+            checkout_ref="${GITHUB_REF}"
+          fi
+
+          ref_name="$checkout_ref"
+          ref_name="${ref_name#refs/heads/}"
+          ref_name="${ref_name#refs/tags/}"
+          version="$ref_name"
+          safe_ref_tag="$(echo "$ref_name" | sed 's/[^a-zA-Z0-9_.-]/-/g')"
+
+          {
+            echo "checkout_ref=$checkout_ref"
+            echo "version=$version"
+            echo 'image_tags<<EOF'
+            echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7}"
+
+            if [ "$checkout_ref" = "refs/heads/main" ] || [ "$ref_name" = "main" ]; then
+              echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            fi
+
+            if echo "$version" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$version"
+              echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$(echo "$version" | sed -E 's/^(v[0-9]+\.[0-9]+)\.[0-9]+$/\1/')"
+            elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$safe_ref_tag"
+            fi
+
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.vars.outputs.checkout_ref }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -35,25 +80,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.vars.outputs.image_tags }}
           build-args: |
-            VERSION=${{ github.ref_name }}
+            VERSION=${{ steps.vars.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

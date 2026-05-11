@@ -1,10 +1,8 @@
 # Nuxt 3 builder
-FROM node:22-alpine as builder
+FROM node:22-alpine AS builder
 
 RUN apk add --no-cache openssl
-RUN corepack enable && corepack prepare pnpm@latest --activate
-ENV PNPM_HOME=/usr/local/bin
-RUN pnpm add --global prisma@5.16.2
+RUN corepack enable && corepack prepare pnpm@9 --activate
 
 ARG VERSION
 
@@ -12,15 +10,15 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-# 安装生产依赖
-RUN pnpm install
+# 安装构建依赖
+RUN pnpm install --frozen-lockfile
 ENV NODE_ENV=production
 
 # 复制整个项目
 COPY . .
 
 # 生成Prisma客户端
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 
 RUN echo $VERSION > /app/version
 
@@ -31,11 +29,11 @@ RUN pnpm run build
 # Nuxt 3 production
 FROM node:22-alpine
 RUN apk add --no-cache openssl
-RUN corepack enable && corepack prepare pnpm@latest --activate
-ENV PNPM_HOME=/usr/local/bin
-RUN pnpm add --global prisma@5.16.2
+RUN npm install --global prisma@5.22.0
 
 WORKDIR /app
+
+ARG VERSION
 
 ENV NODE_ENV=production
 ENV NUXT_JWT_SECRET_KEY="uIWcy5NE9M2wmh9"
